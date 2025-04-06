@@ -22,15 +22,11 @@ class ScreenCaptureApp:
     def __init__(self):
         self.root = tk.Tk()
         self.root.attributes("-fullscreen", True)
+        self.root.attributes("-topmost", True)
         self.root.attributes("-alpha", 0.3)  # Janela transparente
         self.root.config(cursor="cross")
-      
-        self.root.attributes("-fullscreen", True)  # Janela em tela cheia
-        self.root.attributes("-topmost", True)     # Sempre no topo
-        self.root.attributes("-alpha", 0.3)        # Janela transparente
-        self.root.config(cursor="cross")
-        self.root.focus_force()                    # Garante o foco na janela de captura
-        self.root.grab_set()                       # Captura todos os eventos de entrada (impede interação com outras janelas)
+        self.root.focus_force()
+        self.root.grab_set()
 
         self.start_x = None
         self.start_y = None
@@ -69,37 +65,37 @@ class ScreenCaptureApp:
         if texto.strip():
             resposta = enviar_para_chatgpt(texto)
             print("\n🤖 Resposta da IA:\n", resposta)
-            mostrar_resultado(resposta)  # Agora exibe o resultado em uma nova janela
+            mostrar_resultado(resposta)
         else:
             print("\n⚠️ Nenhum texto foi reconhecido.")
-            mostrar_resultado("Nenhum texto foi reconhecido.")  # Exibe a mensagem de erro em uma nova janela
+            mostrar_resultado("Nenhum texto foi reconhecido.")
 
 def enviar_para_chatgpt(prompt):
     """ Envia o texto extraído para a API da OpenAI e retorna a resposta. """
     try:
         completion = client.chat.completions.create(
-            model="gpt-4o-mini",  # Agora usando gpt-4o-mini
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=100  
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Seja o mais breve possível em sua resposta. Apenas selecione uma alternativa ou uma sequência de Verdadeiros e Falsos."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=100
         )
-        return completion.choices[0].message.content
+        return completion.choices[0].message.content.strip()
     except Exception as e:
-        return f"Erro ao conectar com a API: {str(e)}"
+        print("Erro ao gerar resposta:", e)
+        return "Erro ao gerar resposta."
 
 def mostrar_resultado(resposta_ia):
     """ Função para exibir o resultado da IA em uma nova janela """
     result_window = tk.Tk()
     result_window.title("Resultado da IA")
-    result_window.geometry("500x200+100+100")  # Definir posição na tela (ajuste conforme necessário)
-    
-    # Alinhar texto à esquerda e sempre no topo
-    resultado_label = tk.Label(result_window, text=resposta_ia, fg="white", bg="black", font=("Arial", 10), wraplength=300, anchor="w")
-    resultado_label.pack(fill=tk.X, padx=10, pady=5)
+    result_window.geometry("500x200+100+100")
 
-    # Fechar automaticamente após 10 segundos
+    resultado_label = tk.Label(result_window, text=resposta_ia, fg="white", bg="black", font=("Arial", 10), wraplength=480, anchor="w", justify="left")
+    resultado_label.pack(fill=tk.X, padx=10, pady=10)
+
     result_window.after(20000, result_window.destroy)
-
-    # Definir foco para o próximo programa, para não roubar o foco
     result_window.attributes("-topmost", True)
     result_window.mainloop()
 
@@ -107,9 +103,9 @@ def capturar_texto():
     app = ScreenCaptureApp()
     app.root.mainloop()
 
+# 🔹 Atalho para iniciar captura
 print("🔥 Pressione 'CTRL + ALT + SHIFT + Print Screen' para capturar a tela. Pressione 'ESC' para sair.")
 
-# Loop infinito para aguardar a tecla de atalho
 while True:
     if keyboard.is_pressed("ctrl+alt+shift+print_screen"):
         capturar_texto()
